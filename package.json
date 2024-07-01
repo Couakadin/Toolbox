@@ -1,0 +1,21 @@
+{
+  "name": "be.valentinsaintjean.toolbox",
+  "version": "0.0.1",
+  "displayName": "Toolbox Unity Valentin",
+  "description": "Tools for Unity",
+  "unity": "2022.3",
+  "unityRelease": "",
+  "documentationUrl": "",
+  "changelogUrl": "",
+  "licensesUrl": "",
+  "dependencies": {},
+  "keywords": [
+    "unity",
+    "toolbox"
+  ],
+  "author": {
+    "name": "Valentin Saint-Jean",
+    "email": "webdev.valentin@gmail.com",
+    "url": "https://github.com/Couakadin"
+  }
+}
