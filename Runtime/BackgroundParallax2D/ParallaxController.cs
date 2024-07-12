@@ -1,70 +1,59 @@
 using UnityEngine;
 
+[RequireComponent(typeof(SpriteRenderer))]
+[AddComponentMenu("Parallax Controller")]
 public class ParallaxController : MonoBehaviour
 {
-    [Header("Camera Instancier")]
-    [SerializeField]
-    Camera m_camera;
-    Vector3 m_cameraStartPosition;
-    float m_distance;
-
-    [Header("Background Instancier")]
-    GameObject[] m_backgrounds;
-    Material[] m_materials;
-    float[] m_backgroundSpeeds;
-    float m_farthestBackground;
-
     [Header("Parallax Settings")]
-    [SerializeField, Range(.01f, .05f)]
-    float m_parallaxSpeed;
+    [SerializeField, Tooltip("Loop on axis Y")]
+    bool m_infiniteVertical;
+    [SerializeField, Tooltip("Loop on axis X")]
+    bool m_infiniteHorizontal;
+    
+    [SerializeField, Range(0f, 1f), Tooltip("Select parallax speed"), Space]
+    float m_parallaxEffect;
 
-    void Awake()
+    float m_textureUnitSizeX, m_textureUnitSizeY;
+
+    Camera m_camera;
+    Vector3 m_lastCameraPosition;
+
+    void Start()
     {
-        m_camera = m_camera ?? Camera.main;
-        m_cameraStartPosition = m_camera.transform.position;
+        m_camera = Camera.main;
+        m_lastCameraPosition = m_camera.transform.position;
+        
+        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+        renderer.drawMode = SpriteDrawMode.Tiled;
 
-        BackgroundSpeedCalculate(BackgroundCount());
+        Sprite sprite = renderer.sprite;
+        Texture2D texture = sprite.texture;
+        m_textureUnitSizeX = texture.width / sprite.pixelsPerUnit;
+        m_textureUnitSizeY = texture.height / sprite.pixelsPerUnit;
     }
 
     void LateUpdate()
     {
-        m_distance = m_camera.transform.position.x - m_cameraStartPosition.x;
-        transform.position = new Vector3(m_camera.transform.position.x, transform.position.y, transform.position.z);
+        Vector3 deltaMovement = m_camera.transform.position - m_lastCameraPosition;
+        transform.position += new Vector3(deltaMovement.x * m_parallaxEffect, deltaMovement.y * m_parallaxEffect);
+        m_lastCameraPosition = m_camera.transform.position;
 
-        for (int i = 0; i < m_backgrounds.Length; i++)
+        if (m_infiniteHorizontal)
         {
-            float m_speed = m_backgroundSpeeds[i] * m_parallaxSpeed;
-            m_materials[i].SetTextureOffset("_MainTex", new Vector2(m_distance, 0) * m_speed);
-        }
-    }
-
-    int BackgroundCount()
-    {
-        int backgroundCount = transform.childCount;
-        m_materials = new Material[backgroundCount];
-        m_backgroundSpeeds = new float[backgroundCount];
-        m_backgrounds = new GameObject[backgroundCount];
-
-        for (int i = 0; i < backgroundCount; i++)
-        {
-            m_backgrounds[i] = transform.GetChild(i).gameObject;
-            m_materials[i] = m_backgrounds[i].GetComponent<Renderer>().material;
+            if (Mathf.Abs(m_camera.transform.position.x - transform.position.x) >= m_textureUnitSizeX)
+            {
+                float offsetPositionX = (m_camera.transform.position.x - transform.position.x) % m_textureUnitSizeX;
+                transform.position = new Vector3(m_camera.transform.position.x + offsetPositionX, transform.position.y);
+            }
         }
 
-        return backgroundCount;
-    }
-
-    void BackgroundSpeedCalculate(int _backgroundCount)
-    {
-        for (int i = 0; i < _backgroundCount; i++)
+        if (m_infiniteVertical)
         {
-            if ((m_backgrounds[i].transform.position.z - m_camera.transform.position.z) > m_farthestBackground)
-                m_farthestBackground = m_backgrounds[i].transform.position.z - m_camera.transform.position.z;
-        }
-
-        for (int i = 0; i < _backgroundCount; i++)
-        {
-            m_backgroundSpeeds[i] = 1 - (m_backgrounds[i].transform.position.z - m_camera.transform.position.z) / m_farthestBackground;
+            if (Mathf.Abs(m_camera.transform.position.y - transform.position.y) >= m_textureUnitSizeY)
+            {
+                float offsetPositionY = (m_camera.transform.position.y - transform.position.y) % m_textureUnitSizeY;
+                transform.position = new Vector3(transform.position.x, m_camera.transform.position.y + offsetPositionY);
+            }
         }
     }
 }
